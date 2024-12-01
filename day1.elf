@@ -6,5 +6,5 @@ right: nums map(&_1) sort,
 "Part1: %d" fmt(_) print,
 
 counts: nums group(&_1) map(&len),
-nums fold({acc,n| acc + (n _0 * counts at(n _0) if({$}, 0))},0),
+nums fold({acc,n| acc + (n _0 * counts at(n _0) else(0))},0),
 "Part2: %d" fmt(_) print
