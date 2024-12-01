@@ -1,0 +1,14 @@
+#!/usr/bin/env elf
+nums: "day1.txt" lines map({ [&read, "   ", &read] match($) }),
+left: nums map(&_0) sort,
+right: nums map(&_1) sort,
+dif: 0 ref,
+0 to(left len dec) do({
+ d: (left nth($) - right nth($)) abs,
+ dif swap({$ + d})
+ }),
+"Part1: %d" fmt(dif val) print,
+
+counts: nums group(&_1) map(&len),
+nums fold({acc,n| acc + (n _0 * counts at(n _0) if({$}, 0))},0),
+"Part2: %d" fmt(_) print
