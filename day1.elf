@@ -1,5 +1,5 @@
 #!/usr/bin/env elf
-nums: "day1.txt" lines map({ [&read, "   ", &read] match($) }),
+nums: "day1.txt" lines map({ [&read, &ws, &read] match($) }),
 left: nums map(&_0) sort,
 right: nums map(&_1) sort,
 0 to(left len dec) fold({acc,i| acc + (left nth(i) - right nth(i)) abs }, 0),
