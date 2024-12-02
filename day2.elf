@@ -1,0 +1,12 @@
+#!/usr/bin/env elf
+reports: "day2.txt" lines map({$ split(" ") map({$ read _0})}),
+
+safe: {l| ((l = l sort) or (l = l sort reverse)) and (l heads map({l| (l len < 2) if(true, { (l _0 - l _1) abs, (_ > 0) and (_ < 4) }) }) has?(false) not )},
+
+reports keep(safe) len,
+"Part1: %d" fmt(_) print,
+
+# Part2, remove 1 element from report and see if it becomes safe
+safe2: {l | 0 to(l len) map({ (l take($)) ++ (l drop($ inc)) }) some(safe) },
+reports keep(safe2) len,
+"Part2: %d" fmt(_) print
