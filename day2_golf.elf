@@ -1,2 +1,2 @@
 #!/usr/bin/env elf
-r:"day2.txt" lines map({$ split(" ") map(&eval)}),s:{l:$ part(2,1),((l all?(&<)) or (l all?(&>))) and (l map({($ _0 - $ _1) abs < 4}) has?(false) not)},s2:{l|0 to(l len) map({(l take($)) ++ (l drop($ inc))}) some(s)},[s,s2] do({r count($) print})
+s:{l:$ part(2,1),((l all?(&<)) or (l all?(&>))) and (l map({($ _0 - $ _1) abs < 4}) has?(false) not)},s2:{l|0 to(l len) map({(l take($)) ++ (l drop($ inc))}) some(s)},[s,s2] do({"day2.txt" lines map({$ split(" ") map(&eval)}) count($) print})
