@@ -2,9 +2,9 @@
 nums: "day1.txt" lines map({ [&read, &ws, &read] match($) }),
 left: nums map(&_0) sort,
 right: nums map(&_1) sort,
-0 to(left len dec) fold({acc,i| acc + (left nth(i) - right nth(i)) abs }, 0),
+0 to(left len dec) sum({(left nth($) - right nth($)) abs}),
 "Part1: %d" fmt(_) print,
 
 counts: nums group(&_1) map(&len),
-nums fold({acc,n| acc + (n _0 * counts at(n _0) else(0))},0),
+nums sum({$ _0 * counts at($ _0) else(0)}),
 "Part2: %d" fmt(_) print
