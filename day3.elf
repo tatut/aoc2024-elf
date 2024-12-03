@@ -1,0 +1,23 @@
+#!/usr/bin/env elf
+input: "day3.txt" contents,
+h: input ref,
+acc: 0 ref,
+
+{ h val empty? not } while({
+  ["mul(", &read, ",", &read, ")", {[nil,[]]}] match(h val) if({n|acc swap({$ + (n _0 * n _1)})}),
+  h swap({$ drop(1)})
+}),
+"Part1: %d" fmt(acc val) print,
+
+# Part 2 keep track of dos and donts
+h val(input),
+acc val(0),
+c: true ref,
+
+{ h val empty? not } while({
+  h val starts?("don't()") if({c val(false)}),
+  h val starts?("do()") if({c val(true)}),
+  c val if({ ["mul(", &read, ",", &read, ")", {[nil,[]]}] match(h val) if({n|acc swap({$ + (n _0 * n _1)})}) }),
+  h swap({$ drop(1)})
+}),
+"Part2: %d" fmt(acc val) print
