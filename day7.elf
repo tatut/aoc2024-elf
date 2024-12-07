@@ -1,0 +1,9 @@
+#!/usr/bin/env elf
+eqs: "day7.txt" lines map({p:$ split(": "), [p _0 eval, p _1 split(" ") map(&eval)]}),
+ops: [{l,r| l + r}, {l,r| l * r}, {l,r| (l str ++ r str) eval}], # remove last op, for part1
+test: {eq| r: eq _0, ns: eq _1,
+   ns drop(1) fold({rs, r| #"rs: %w, r %w" fmt(rs,r) print,
+     rs mapcat({l| ops map({op| op call(l,r)})}) },
+     [ns _0]),
+   _ has?(r) if(eq)},
+eqs keep(test) pr map(&_0) sum pr

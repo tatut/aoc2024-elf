@@ -3,34 +3,23 @@ rows: "day4.txt" lines,
 h: rows len,
 w: rows _0 len,
 at: {x,y| ((y >= 0) and (y < h) and (x >= 0) and (x < w)) if({rows nth(y) nth(x)})},
-check: {x,y,xd,yd|
-  (at call(x + (xd * 1), y + (yd * 1)) = @M) and
-  (at call(x + (xd * 2), y + (yd * 2)) = @A) and
-  (at call(x + (xd * 3), y + (yd * 3)) = @S) },
+check: {x,y,xd,yd| 1 to(3) map({at call(x + (xd * $), y + (yd * $))}) = "MAS" },
 # go through every position and if it is an X, check all directions for match
 c: 0 ref,
 0 to(w dec) do({x|
  0 to(h dec) do({y|
    (at call(x,y) = @X) if({
-     check call(x,y,1,0) if({c swap(&inc)}),
-     check call(x,y,-1,0) if({c swap(&inc)}),
-     check call(x,y,0,1) if({c swap(&inc)}),
-     check call(x,y,0,-1) if({c swap(&inc)}),
-     check call(x,y,1,1) if({c swap(&inc)}),
-     check call(x,y,1,-1) if({c swap(&inc)}),
-     check call(x,y,-1,1) if({c swap(&inc)}),
-     check call(x,y,-1,-1) if({c swap(&inc)})
+     c swap({$ + [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]] count({check call(x,y,$ _0, $ _1)})})
    })
  })
 }),
 "Part1: %d" fmt(c val) print,
-
 # part2, find 2 MAS in shape of X. Check at every A
 check2: {x,y|
- (((at call(x - 1, y - 1) = @M) and (at call(x + 1, y + 1) = @S)) or
-  ((at call(x - 1, y - 1) = @S) and (at call(x + 1, y + 1) = @M))) and
- (((at call(x + 1, y - 1) = @M) and (at call(x - 1, y + 1) = @S)) or
-  ((at call(x + 1, y - 1) = @S) and (at call(x - 1, y + 1) = @M)))},
+ tl: at call(x - 1, y - 1), tr: at call(x + 1, y - 1),
+ bl: at call(x - 1, y + 1), br: at call(x + 1, y + 1),
+ (((tl = @M) and (br = @S)) or ((tl = @S) and (br = @M))) and
+ (((tr = @M) and (bl = @S)) or ((tr = @S) and (bl = @M)))},
 c val(0),
 0 to(w dec) do({x|
  0 to(h dec) do({y|
