@@ -1,0 +1,36 @@
+#!/usr/bin/env elf
+
+# Calculate antinodes for pair of (same frequency) antenna positions
+antinodes: {a1,a2| d: a2 - a1, [a1 - d, a2 + d]},
+
+# Load map using grid util
+"grid.elf" use,
+m: grid call("day8.txt"),
+
+# Find all antennas
+antennas: %{} ref,
+m do({x,y,ch|
+ (ch = @.) not if({antennas swap({ants| ants put(ch, ants at(ch) ++ [[x,y]])})})
+}),
+
+# Get all antinode positions
+positions: [] ref,
+antennas val do({freq,pos|
+  nodes: pos allpairs mapcat({ antinodes call($ _0, $ _1) }) sortu filter({ m inside?($ _0, $ _1) }),
+  positions swap({acc | (acc ++ nodes) sortu })
+}),
+
+"Part1: %d" fmt(positions val len) print,
+
+# Part2 go thru the whole grid and check . positions
+# If they have the same slope for two antennas of the same freq, then it is an antinode
+positions val([]),
+antennas val do({freq, pos | positions swap({acc| acc ++ pos})}),
+m do({x,y,ch| (ch = @.) if({
+  antennas val do({freq, pos|
+    slopes: pos keep({p| dx: (p _0 - x), dy: (p _1 - y), (dx = 0) if(nil, { dy / dx })}),
+    (slopes len > slopes sortu len) if({ positions swap({acc| acc ++ [[x,y]]}) })
+  })
+ })
+}),
+"Part2: %d" fmt(positions val sortu len) print
