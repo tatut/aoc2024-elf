@@ -1,0 +1,18 @@
+Grid{max-x,max-y,data,override},
+Grid.inside?: {x,y| (x >= 0) and (x <= my max-x) and (y >= 0) and (y <= my max-y) },
+Grid.at: {x,y| my inside?(x,y) if({ my data nth(y) nth(x) }) },
+Grid.with: {x,y,what| my override(my override put([x,y], what)) },
+Grid.do: {fun|
+  maxx: my max-x, maxy: my max-y,
+  0 to(maxy) do({y|
+    0 to(maxx) do({x|
+      fun call(x,y,my at(x,y))
+    })
+  })
+},
+# return up,down,left,right neighbors for x,y that are inside
+Grid.neighbors: {x,y|
+  [ [x + 1, y], [x - 1, y], [x, y - 1], [x, y + 1] ] filter({p| my inside?(p _0, p _1)})
+},
+# Load grid from file (FIXME: override is not set)
+grid: { f | l: f lines, Grid{max-x: l _0 len dec, max-y: l len dec, data: l}}
