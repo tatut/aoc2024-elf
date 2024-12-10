@@ -1,0 +1,16 @@
+#!/usr/bin/env elf
+input: "day5.txt" lines split([""]),
+rules: input _0 map({[&read,"|",&read] match($)}),
+updates: input _1 map({ $ split(",") map(&eval) }),
+valid: {u,r | (u has?(r _0) and u has?(r _1)) if({ f: u filter({ ($ = r _0) or ($ = r _1) }), f = r}, true) },
+validall: {u| rules all?({r| valid call(u,r)})},
+middle: {u | u nth( (u len / 2) floor) },
+"Part1: %d" fmt(updates filter({u| rules all?({r| valid call(u,r)})}) map(middle) sum) print,
+invalid: updates filter({u| rules all?({r| valid call(u,r)}) not}),
+fix: {u,r| i1: u index(r _0), i2: u index(r _1), ((i1 = -1) or (i2 = -1) or (i1 <= i2)) if(u,
+       {s: u split([r _1]),
+        s _0 ++ [r _0] ++ (s _1 map({ ($ = r _0) if(r _1, $) }))})},
+upd: nil ref,
+fixed: invalid map({u| upd val(u), { validall call(upd val) not } while({ upd swap({u| rules fold({u1,r1| #"fixing u1:%w, r:%w" fmt(u1,r1) print,
+fix call(u1,r1)},u)})}), upd val}),
+"Part2: %d" fmt(fixed map(middle) sum) print
