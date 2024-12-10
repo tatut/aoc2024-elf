@@ -1,2 +1,6 @@
 /input.sh
 /where_exe
+/.clj-kondo/
+/.cpcache/
+/.lsp/
+/.nrepl-port
