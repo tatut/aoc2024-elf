@@ -1,0 +1,30 @@
+#!/usr/bin/env elf
+rows: "day6_sample.txt" lines,
+h: rows len,
+w: rows _0 len,
+at: {x,y| ((y >= 0) and (y < h) and (x >= 0) and (x < w)) if({rows nth(y) nth(x)})},
+find: {what| 0 to(h dec) some({y| 0 to(w dec) some({x| (at call(x,y) = what) if([x,y])})})},
+start: find call(@^),
+# walk in dir 0=north,1=east,2=south,3=west
+dirs: %{0: [0,-1], 1: [1,0], 2: [0,1], 3: [-1,0]},
+fwd: {p,d| dir: dirs at(d), [p _0 + dir _0, p _1 + dir _1]},
+turn: {d| d1: d + 1, (d1 > 3) if(0, d1)},
+# part1 walk straight until hitting something, then turn right, count positions
+positions: %{} ref,
+positions swap({$ put(start, 1)}),
+p: start ref,
+dir: 0 ref,
+"here %w" fmt(start) print,
+done: false ref,
+{ done val not } while({
+  #"at %w, dir %w" fmt(p val, dir val) print,
+  np: fwd call(p val, dir val),
+  m: at call(np _0, np _1),
+  (m = nil) if(
+   { done val(true) },
+   {((m = @.) or (m = @^)) if(
+     {p val(np), positions swap({$ put(np, 1)})},
+     {dir swap(turn)})
+   })
+}),
+"Part1: %d" fmt(positions val len) print
