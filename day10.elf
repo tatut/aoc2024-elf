@@ -1,0 +1,15 @@
+#!/usr/bin/env elf
+"grid.elf" use,
+g: grid call("day10.txt"),
+# track positions and paths
+routes: [] ref,
+# function to find path to 9 (ch 57)
+path: {x,y,e,first| n: g at(x,y),
+ (n = 57) if(
+ { routes swap({$ ++ [[first,x,y]]}) },
+ { # take all neighbors are inside and have e+1
+   g neighbors(x,y) filter({g at($ _0, $ _1) = (e + 1)}) do({p | path call(p _0, p _1, e + 1, first)})
+ }
+)},
+g do({x,y,at| (at = 48) if({path call(x,y,48,[x,y])})}),
+"Part1: %d, Part2: %d" fmt(routes val sortu len, routes val len) print
