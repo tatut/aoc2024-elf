@@ -26,6 +26,17 @@ char *find(char *input, char ch) {
   return out;
 }
 
+bool looking_at(char *start, char *expected) {
+  char *input = start;
+  while(*expected != 0) {
+    if(*input == 0) return false;
+    if(*input != *expected) return false;
+    input++;
+    expected++;
+  }
+  return true;
+}
+
 char* input(const char *file, size_t *len) {
   struct stat b;
   stat(file, &b);
@@ -139,6 +150,7 @@ long number(char* ptr, char** after) {
   return res;
 }
 
+
 size_t lines_count(char* input) {
   int c=0;
   while(*input != 0) {
@@ -152,14 +164,22 @@ size_t lines_count(char* input) {
 #define lines_each(input, line, body)                                          \
   char *line = input;                                                          \
   bool _line_done = false;                                                     \
-  while (*line != 0 && _line_done == false) {                                    \
+  while (*line != 0 && _line_done == false) {                                  \
     char *_line_end = find(line, '\n');                                        \
-    if (*_line_end == 0)                                                        \
+    char _old_line_end = *_line_end;                                           \
+    if (*_line_end == 0)                                                       \
       _line_done = true;                                                       \
     else                                                                       \
       *_line_end = 0;                                                          \
-    body line = _line_end + 1;                                               \
+    body *_line_end = _old_line_end;                                           \
+    line = _line_end + 1;                                                      \
   }
+
+
+
+
+
+
 
 
 
