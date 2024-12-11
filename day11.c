@@ -1,20 +1,22 @@
 #include "aoc.h"
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 // A hashtable with predefined amount of space
 struct entry {
   uint64_t number;
-  long count; // if -1, this is unused
+  long count; // if 0, this is unused
 };
 
-#define NENTRIES 16
+// Playing with the entries/buckets numbers has performance impacts
+// more entries and less buckets => more scanning on collisions
+#define NENTRIES 8
+#define NBUCKETS 2048
 
 struct bucket {
-  struct entry entries[16];
+  struct entry entries[NENTRIES];
 };
-
-#define NBUCKETS 512
 
 struct ht {
   struct bucket buckets[NBUCKETS];
@@ -37,7 +39,7 @@ void ht_put(struct ht* t, uint64_t n, long count) {
       b->entries[i].count = count;
       return;
     }
-    if(first_free == -1 && b->entries[i].count == -1) first_free = i;
+    if(first_free == -1 && b->entries[i].count == 0) first_free = i;
   }
   if(first_free == -1) panic("No space in bucket");
   b->entries[first_free].number = n;
@@ -47,26 +49,18 @@ void ht_put(struct ht* t, uint64_t n, long count) {
 long ht_get(struct ht* t, uint64_t n) {
   struct bucket *b = &t->buckets[hash(n) % NBUCKETS];
   for(size_t i=0;i<NENTRIES; i++) {
-    if(b->entries[i].count != -1 && b->entries[i].number == n) return b->entries[i].count;
+    if(b->entries[i].count != 0 && b->entries[i].number == n) return b->entries[i].count;
   }
-  return -1;
+  return 0;
 }
 
 void ht_upd(struct ht *t, uint64_t n, long by) {
   long existing = ht_get(t, n);
-  if(existing==-1) {
-    ht_put(t, n, by < 0 ? -1 : by);
-  } else {
-    ht_put(t, n, existing + by);
-  }
+  ht_put(t, n, existing + by);
 }
 
 void ht_clear(struct ht *t) {
-  for(size_t b=0;b<NBUCKETS;b++) {
-    for(size_t e=0;e<NENTRIES;e++) {
-      t->buckets[b].entries[e].count = -1;
-    }
-  }
+  memset(t, 0, sizeof(struct ht));
 }
 
 struct ht *ht_new() {
@@ -94,7 +88,7 @@ void blink(struct ht *from, struct ht *to) {
   for(size_t bn=0;bn<NBUCKETS;bn++) {
     for(size_t e=0;e<NENTRIES;e++) {
       long c = from->buckets[bn].entries[e].count;
-      if(c != -1) {
+      if(c != 0) {
         uint64_t n = from->buckets[bn].entries[e].number;
         if(n == 0) {
           // replace 0 with 1
@@ -157,10 +151,9 @@ void sample(struct ht *t) {
 
 aoc_main({
     struct ht *t1 = ht_new();
-
     data(t1);
     struct ht *t2 = ht_new();
-    for(int i=1;i<=80; i++) {
+    for(int i=1;i<=75; i++) {
      if(i%2 == 1) blink(t1, t2);
      else blink(t2, t1);
      if(i==25) printf("Part1: %ld\n", count(t2));
