@@ -19,9 +19,10 @@ struct Grid {
   char *data;
 };
 
+// return next occurence of ch in input, or end of input
 char *find(char *input, char ch) {
   char *out = input;
-  while(*out != ch) out++;
+  while(*out != ch && *out != 0) out++;
   return out;
 }
 
@@ -137,6 +138,35 @@ long number(char* ptr, char** after) {
   *after = end;
   return res;
 }
+
+size_t lines_count(char* input) {
+  int c=0;
+  while(*input != 0) {
+    if(*input == '\n') c++;
+    input++;
+  }
+  return c;
+}
+
+
+#define lines_each(input, line, body)                                          \
+  char *line = input;                                                          \
+  bool _line_done = false;                                                     \
+  while (*line != 0 && _line_done == false) {                                    \
+    char *_line_end = find(line, '\n');                                        \
+    if (*_line_end == 0)                                                        \
+      _line_done = true;                                                       \
+    else                                                                       \
+      *_line_end = 0;                                                          \
+    body line = _line_end + 1;                                               \
+  }
+
+
+
+
+
+
+
 
 
 clock_t started;
