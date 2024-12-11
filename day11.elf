@@ -1,0 +1,16 @@
+#!/usr/bin/env elf
+rules: [{($ = 0) if([1])},
+        {n:$, ((n numdigits % 2) = 0) if({s:n str, p: n numdigits / 2, [s take(p) eval, s drop(p) eval]})},
+        {[$ * 2024]}],
+blink: {$ mapcat({n:$, rules some({$ call(n)})})},
+in: [4022724, 951333, 0, 21633, 5857, 97, 702, 6],
+ns: in group({$}) map(&len),
+blinks: {times |
+  # part 2 put counts of different numbers in map
+  1 to(times) fold({acc,round|
+  acc as-list fold({m,num|
+    n: num _0, c: num _1,
+    blink call([n]) fold({m,nn| m put(nn, c + m at(nn,0))}, m put(n, m at(n) - c))}, acc)
+  }, ns) as-list sum(&_1)
+},
+[25, 75] map(blinks) pr

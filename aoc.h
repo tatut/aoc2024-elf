@@ -146,3 +146,5 @@ void time_end() {
   clock_t ended = clock();
   printf("Took %ldms\n",  (ended-started) * 1000 / CLOCKS_PER_SEC);
 }
+
+#define aoc_main(body) int main(int __argc, char **__argv) { time_start(); { body }; time_end(); return 0; }
