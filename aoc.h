@@ -104,6 +104,29 @@ void grid_free(struct Grid* g) {
   if (val != 0)                                                                \
     body;
 
+// All neighbors 4, even outside bounds (val==0 then)
+#define grid_neighbors_all(g, x, y, nx, ny, val, body)                         \
+  size_t nx;                                                                   \
+  size_t ny;                                                                   \
+  char val;                                                                    \
+  nx = x - 1;                                                                  \
+  ny = y;                                                                      \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  nx = x + 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  nx = x;                                                                      \
+  ny = y - 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  ny = y + 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;
+
+
+
+
 #define grid_find(g, val, x, y)                                                \
   for (size_t gfx = 0; gfx < g->w; gfx++) {                                    \
     for (size_t gfy = 0; gfy < g->h; gfy++) {                                  \
@@ -150,6 +173,19 @@ long number(char* ptr, char** after) {
   return res;
 }
 
+// Read a number at position (which must be found here)
+// if first char is '-' then number is negative
+long number_neg(char *ptr, char **after) {
+  if(*ptr != '-' && !is_digit(*ptr)) panic("Expected - or a digit when parsing number");
+  char *end = ptr+1;
+  while(is_digit(*end)) end++;
+  char old_end = *end;
+  *end = 0;
+  long res = atol(ptr);
+  *end = old_end;
+  *after = end;
+  return res;
+}
 
 size_t lines_count(char* input) {
   int c=0;
@@ -161,9 +197,10 @@ size_t lines_count(char* input) {
 }
 
 
-#define lines_each(input, line, body)                                          \
+#define lines_each(input, line_idx, line, body)                          \
   char *line = input;                                                          \
   bool _line_done = false;                                                     \
+  size_t line_idx = 0; \
   while (*line != 0 && _line_done == false) {                                  \
     char *_line_end = find(line, '\n');                                        \
     char _old_line_end = *_line_end;                                           \
@@ -173,6 +210,7 @@ size_t lines_count(char* input) {
       *_line_end = 0;                                                          \
     body *_line_end = _old_line_end;                                           \
     line = _line_end + 1;                                                      \
+    line_idx++; \
   }
 
 
