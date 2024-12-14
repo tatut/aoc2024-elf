@@ -1,6 +1,7 @@
 #include "aoc.h"
 #include <string.h>
 #include <unistd.h>
+#include "raylib.h"
 
 struct Robot {
   int x, y, vx, vy;
@@ -56,15 +57,22 @@ long part1(struct Robot *r, size_t robots) {
 // area sized string with '\n' line ends and nul terminator
 char area[((W + 1) * H) + 1];
 
-void show(struct Robot *r, size_t robots) {
+void show(struct Robot *r, size_t robots, size_t rounds) {
+  ClearBackground(BLACK);
+  BeginDrawing();
   size_t i,j;
   memset(&area[0], '.', ((W + 1) * H));
   area[((W + 1) * H)] = 0;
   for(i=0;i<=H;i++) { area[i*(W+1)+W] = '\n'; }
 
-  for(j=0;j<robots;j++)
+  for(j=0;j<robots;j++) {
     area[ r[j].y * (W+1) + r[j].x ] = '#';
-
+    DrawRectangle(r[j].x*8, r[j].y*8, 8, 8, GREEN);
+  }
+  char str[20];
+  sprintf(&str[0], "Round: %ld", rounds);
+  DrawText(&str[0], 350, 870, 20, WHITE);
+  EndDrawing();
   //printf("%s", &area[0]);
 }
 
@@ -123,14 +131,19 @@ aoc_main({
     struct Robot *r = malloc(robots*sizeof(struct Robot));
     lines_each(in, i, line, { parse(&r[i], line); });
 
+    InitWindow(900, 900, "Hunt for the X-mas tree!");
+    SetTargetFPS(240);
+
     printf("Part1: %ld\n", part1(r, robots)); // 223020000
 
     size_t rounds=100;
-    show(r, robots);
+
+    show(r, robots, rounds);
     while(!tree_found()) {
       move_all(r,robots);
       rounds++;
-      show(r, robots);
+      show(r, robots,rounds);
     }
+    getchar();
     printf("Part2: %ld\n", rounds); // 7338
   });

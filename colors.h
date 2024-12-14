@@ -1,0 +1,67 @@
+#include "raylib.h"
+
+#ifndef COLORS_H
+#define COLORS_H
+
+Color silver = {0xc0,0xc0,0xc0,0xff};
+Color darkslategray = {0x2f,0x4f,0x4f,0xff};
+Color saddlebrown = {0x8b,0x45,0x13,0xff};
+Color darkgreen = {0x00,0x64,0x00,0xff};
+Color olive = {0x80,0x80,0x00,0xff};
+Color darkslateblue = {0x48,0x3d,0x8b,0xff};
+Color navy = {0x00,0x00,0x80,0xff};
+Color yellowgreen = {0x9a,0xcd,0x32,0xff};
+Color lightseagreen = {0x20,0xb2,0xaa,0xff};
+Color darkmagenta = {0x8b,0x00,0x8b,0xff};
+Color red = {0xff,0x00,0x00,0xff};
+Color orange = {0xff,0xa5,0x00,0xff};
+Color yellow = {0xff,0xff,0x00,0xff};
+Color lime = {0x00,0xff,0x00,0xff};
+Color mediumspringgreen = {0x00,0xfa,0x9a,0xff};
+Color blueviolet = {0x8a,0x2b,0xe2,0xff};
+Color crimson = {0xdc,0x14,0x3c,0xff};
+Color deepskyblue = {0x00,0xbf,0xff,0xff};
+Color blue = {0x00,0x00,0xff,0xff};
+Color coral = {0xff,0x7f,0x50,0xff};
+Color fuchsia = {0xff,0x00,0xff,0xff};
+Color dodgerblue = {0x1e,0x90,0xff,0xff};
+Color palevioletred = {0xdb,0x70,0x93,0xff};
+Color khaki = {0xf0,0xe6,0x8c,0xff};
+Color deeppink = {0xff,0x14,0x93,0xff};
+Color violet = {0xee,0x82,0xee,0xff};
+
+Color color_for_ch(char ch) {
+  switch(ch) {
+  case 'A': return silver;
+  case 'B': return darkslategray;
+  case 'C': return saddlebrown;
+  case 'D': return darkgreen;
+  case 'E': return olive;
+  case 'F': return darkslateblue;
+  case 'G': return navy;
+  case 'H': return yellowgreen;
+  case 'I': return lightseagreen;
+  case 'J': return darkmagenta;
+  case 'K': return red;
+  case 'L': return orange;
+  case 'M': return yellow;
+  case 'N': return lime;
+  case 'O': return mediumspringgreen;
+  case 'P': return blueviolet;
+  case 'Q': return crimson;
+  case 'R': return deepskyblue;
+  case 'S': return blue;
+  case 'T': return coral;
+  case 'U': return fuchsia;
+  case 'V': return dodgerblue;
+  case 'W': return palevioletred;
+  case 'X': return khaki;
+  case 'Y': return deeppink;
+  case 'Z': return violet;
+  case '.': return BLACK;
+  case '#': return GREEN;
+  default: return WHITE;
+  }
+}
+
+#endif

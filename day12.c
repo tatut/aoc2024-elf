@@ -1,6 +1,8 @@
 #include "aoc.h"
 #include <stdbool.h>
-
+#include <string.h>
+#include "raylib.h"
+#include "colors.h"
 
 size_t corners(struct Grid *g, size_t x, size_t y) {
   char type = grid_at(g, x, y);
@@ -33,11 +35,33 @@ size_t corners(struct Grid *g, size_t x, size_t y) {
 
   return sides;
 }
+
+
+void draw(struct Grid *g, bool* used, char type, size_t perimeter, size_t area, size_t sides) {
+  BeginDrawing();
+  ClearBackground(BLACK);
+  grid_each(g, x, y, val, {
+      Color c = color_for_ch(val);
+      //printf("draw: %c %ld, %ld\n", val, x, y);
+      c = used[grid_idx(g, x,y)] ? ColorBrightness(c, -0.5f) : c;
+      DrawRectangle(x*6,y*6,6,6,c);
+    });
+
+  char str[64];
+  snprintf(str, 64, "Survey '%c', area: %ld, perimeter: %ld, sides: %ld",
+           type, area, perimeter, sides);
+  DrawText(str, 20, 870, 20, WHITE);
+  EndDrawing();
+}
+
 /* Survey the plot at the given position.
    Walks through all reachable positions. */
 void survey(struct Grid *g, bool *used, char type, size_t x, size_t y,
             size_t *perimeter, size_t *area, size_t *sides) {
   used[grid_idx(g,x,y)] = true;
+
+  draw(g, used, type, *perimeter, *area, *sides);
+
 
   grid_neighbors_all(g, x, y, nx, ny, nt, {
       if(nt != type) {
@@ -49,6 +73,7 @@ void survey(struct Grid *g, bool *used, char type, size_t x, size_t y,
       }
     });
   *sides = *sides + corners(g, x, y);
+
 }
 
 // move forward in direction
@@ -123,10 +148,14 @@ void walk(struct Grid *g, int startx, int starty, char type, int dir, size_t *si
 
 
 aoc_main({
+    InitWindow(900,900, "Land surveys");
+    SetTargetFPS(240);
+
     struct Grid* g = grid("day12.txt");
     size_t sz = grid_size(g);
     // Track which places have been used when searching for the next plot
     bool *used = malloc(sizeof(bool)*sz);
+    memset(used, 0, sz*sizeof(bool));
     // iterate positions left to right, top to bottom, so we always land on the top-left pos
     // of a plot.
     size_t area;
