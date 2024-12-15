@@ -4,10 +4,11 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <time.h>
+#include <string.h>
 
-#define panic(X)                                                               \
+#define panic(args...)                                                         \
   {                                                                            \
-    printf(X);                                                                 \
+    printf(args);                                                              \
     printf("\n");                                                              \
     exit(1);                                                                   \
   }
@@ -58,6 +59,35 @@ struct Grid *grid(const char *file) {
   out->w = w;
   out->h = h;
   out->data = data;
+  return out;
+}
+
+struct Grid *grid_from_string(char *data) {
+  size_t len = strlen(data);
+  size_t w = find(data,'\n') - data;
+  size_t h = len / (w+1);
+  struct Grid* out = (struct Grid*) malloc(sizeof(struct Grid));
+  out->w = w;
+  out->h = h;
+  out->data = data;
+  return out;
+};
+
+struct Grid *grid_new(size_t w, size_t h) {
+  char *data = (char *) calloc(((w+1)*h), sizeof(char));
+  struct Grid *g = (struct Grid*) malloc(sizeof(struct Grid));
+  g->w = w;
+  g->h = h;
+  g->data = data;
+  return g;
+}
+
+struct Grid *grid_copy(struct Grid *in) {
+  struct Grid *out = (struct Grid *)malloc(sizeof(struct Grid));
+  out->w = in->w;
+  out->h = in->h;
+  out->data = (char*)malloc(sizeof(char)*(in->w+1)*in->h);
+  memcpy(out->data, in->data, sizeof(char)*(in->w+1)*in->h);
   return out;
 }
 
