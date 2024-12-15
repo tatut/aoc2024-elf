@@ -1,41 +1,54 @@
 #include "aoc.h"
 #include "raylib.h"
+#include "raymath.h"
 #include "colors.h"
+#include <math.h>
 #include <string.h>
 #include <unistd.h>
 
 // size of grid cell in pixels
-#define PX 10
+#define PX 32
 
 const char *dirs = "^>v<";
 
-void draw(struct Grid *g, int dir) {
+Camera2D camera = {{600,450}, {100,100}, 0, 1};
+float rounds = 0;
+Texture2D tileset;
+
+void draw(struct Grid *g, int dir, int x, int y) {
   BeginDrawing();
   ClearBackground(BLACK);
+  BeginMode2D(camera);
+
+  camera.target.x = Lerp(camera.target.x, (float) (x*PX), 0.03);
+  camera.target.y = Lerp(camera.target.y, (float) (y*PX), 0.03);
+  camera.zoom = 1.0f;
+  camera.rotation = 2. * sin(rounds);
+  rounds+= 0.03;
+
   grid_each(g, x, y, val, {
       int cx = x*PX+PX/2;
       int cy = y*PX+PX/2;
-      if(val == '@') {
-        DrawRectangle(x*PX, y*PX, PX, PX, RED);
-        int lx=cx;
-        int ly=cy;
-        switch(dir) {
-        case 0: ly = cy - PX/2; break;
-        case 1: lx = cx + PX/2; break;
-        case 2: ly = cy + PX/2; break;
-        case 3: lx = cx - PX/2; break;
-        }
-        DrawLine(cx, cy, lx, ly, WHITE);
-      } else if(val != '.') {
-        Color c;
-        switch(val) {
-        case '[': c=GREEN; break;
-        case ']': c=BLUE; break;
-        default: c=LIGHTGRAY; break;
-        }
-        DrawRectangle(x*PX,y*PX,PX,PX,c);
+      DrawTextureRec(tileset, (Rectangle) { 64,0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+      switch(val) {
+      case '@':
+        DrawTextureRec(tileset, (Rectangle) { (float) (96+dir*32),0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+        break;
+      case '#':
+        DrawTextureRec(tileset, (Rectangle) { 0,0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+        break;
+      case 'O':
+        DrawTextureRec(tileset, (Rectangle) { 32, 0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+        break;
+      case '[':
+        DrawTextureRec(tileset, (Rectangle) { 224, 0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+        break;
+      case ']':
+        DrawTextureRec(tileset, (Rectangle) { 256, 0, 32, 32 }, (Vector2) { (float) (x*PX), (float) (y*PX) }, WHITE);
+        break;
       }
     });
+  EndMode2D();
   EndDrawing();
 }
 
@@ -49,110 +62,53 @@ void fwd(int x, int y, int dir, int *nx, int *ny) {
   }
 }
 
+bool is_box(char ch) { return ch == 'O' || ch == '[' || ch == ']'; }
+
 // move what into x,y position, shifting any items into dir
 // returns true if we  moved, false if we failed
-bool move(struct Grid *g, char what, int fromx, int fromy, int dir) {
-  int tox, toy;
-  fwd(fromx, fromy, dir, &tox, &toy);
-
-  char at = grid_at(g, tox, toy);
-
-  if(at == '#')
-    // can't move into walls
-    return false;
-  if(at == 'O' && !move(g, at, tox, toy, dir))
-    // box here we failed to move it recursively
-    return false;
-  else if(at != 'O' && at != '.') {
-    panic("Unrecognized %c(%d,%d)", at, tox, toy);
-  }
-
-  // no problem to moving
-  grid_set(g, fromx, fromy, '.');
-  grid_set(g, tox, toy, what);
-  return true;
-}
-
-// recursively check if movement can be done, without doing it
-bool can_move(struct Grid *g, char what, int fromx, int fromy, int dir) {
-  if(what == '.') return true;
-  if(what == ']') {
-    // canonicalize, always check movement from left piece
-    what = '[';
+// if dry_run is true, the grid isn't modified, only check if we could
+bool move(struct Grid *g, int fromx, int fromy, int dir, bool dry_run) {
+  char what = grid_at(g, fromx, fromy);
+  //printf("move(%c,%d,%d,%d,%d)\n", what,fromx,fromy,dir,dry_run);
+  if(what=='#') return false; // can't move walls
+  if(what=='.') return true; // don't need to move empty space
+  if(what==']') { // consider only the left side of big box
+    what='[';
     fromx--;
   }
-
+  bool big_box_l = what=='[';
   int tox, toy;
   fwd(fromx, fromy, dir, &tox, &toy);
-  char at = grid_at(g, tox, toy);
 
-  //printf("can move? %c(%d,%d) => %c(%d,%d) in dir %d\n", what, fromx, fromy, at,tox, toy, dir);
-
-  bool box = what=='[';
-  char at1 = grid_at(g, tox+1, toy); // right side candidate pos
-  // can't move into walls
-  if(at == '#') return false;
-  if(box && at1=='#') return false;
-  if(at == '.' && (!box || at1 == '.')) return true; // simple case of moving to free space
-  // if left/right try to find 1 space before hitting a wall
-  if(dir == 1 || dir == 3) {
-    int dx = dir==1 ? 1 : -1;
-    int tx = fromx + dx;
-    while(grid_at(g, tx, fromy)!='#') {
-      if(grid_at(g, tx, fromy) == '.') return true;
-      tx += dx;
-    }
-    return false;
+  if(dir == 3) {
+    // move left
+    if(!move(g, fromx-1, fromy, dir, dry_run))
+      return false;
+  } else if(dir == 1) {
+    // move right
+    int ex = fromx + (big_box_l?2:1);
+    if(!move(g, ex, fromy, dir, dry_run))
+      return false;
   } else {
-    // move up/down
-    if(!can_move(g, at, tox, toy, dir)) {
-      //printf("%c(%d,%d) left side can't move\n", at,tox,toy);
+
+    if(!move(g, tox, toy, dir, dry_run))
       return false;
-    }
-    if(box && at1 != '.' && !can_move(g, at1, tox+1, toy, dir)) {
-      //printf("%c(%d,%d) right side can't move\n", at1,tox+1,toy);
-      return false;
+    // if [] box, check other side can move as well
+    if(big_box_l) {
+      if(!move(g, tox+1,toy,dir,dry_run))
+        return false;
     }
   }
-  // nothing
+
+  if(!dry_run) {
+    // actually move
+    // no problem to moving
+    grid_set(g, fromx, fromy, '.');
+    if(big_box_l) grid_set(g, fromx+1, fromy, '.');
+    grid_set(g, tox, toy, what);
+    if(big_box_l) grid_set(g, tox+1, toy, ']');
+  }
   return true;
-}
-
-// boxes are now [], this assumes can move is checked before calling
-void move2(struct Grid *g, char what, int fromx, int fromy, int dir) {
-  if(what == ']') {
-    what = '[';
-    fromx--;
-  }
-  bool box = what=='[';
-  int tox, toy;
-  fwd(fromx, fromy, dir, &tox, &toy);
-  char at = grid_at(g, tox, toy);
-
-  //printf("  move %c(%d,%d) => %c(%d,%d)\n", what, fromx, fromy, at, tox,toy);
-
-  // clear my position
-  grid_set(g, fromx, fromy, '.');
-  if(box) grid_set(g, fromx+1, fromy, '.');
-
-  at = grid_at(g, tox, toy);
-  if(at == '[' || at == ']') {
-    // move item in the way
-    //printf(" %c(%d,%d) in the way\n", at, tox, toy);
-    move2(g, at, tox, toy, dir);
-  }
-  if(box) {
-    at = grid_at(g, tox+1,toy);
-    if(at == '[' || at == ']') {
-      //printf("  move other half!\n");
-      move2(g, at, tox+1,toy,dir);
-    }
-  }
-
-
-  grid_set(g, tox, toy, what);
-  if(box) grid_set(g, tox+1, toy, ']');
-
 }
 
 int ch_to_dir(char ins)  {
@@ -175,28 +131,14 @@ void instruction(struct Grid *g, int cx, int cy, char ins, int *nx, int *ny) {
   }
   int dir = ch_to_dir(ins);
   // check recursively if we can move in dir
-  if(move(g, '@', cx, cy, dir)) {
+  if(move(g, cx, cy, dir, true)) {
+    move(g,cx,cy,dir,false);
     fwd(cx, cy, dir, nx, ny);
   } else {
     *nx = cx;
     *ny = cy;
   }
 }
-
-void instruction2(struct Grid *g, int cx, int cy, char ins, int *nx, int *ny) {
-  int dir = ch_to_dir(ins);
-  if(can_move(g, '@', cx, cy, dir)) {
-    //printf("MOVING\n");
-    move2(g, '@', cx, cy, dir);
-    fwd(cx, cy, dir, nx, ny);
-  } else {
-    //printf("CAN'T MOVE\n");
-    *nx = cx;
-    *ny = cy;
-  }
-  //printf("DONE\n");
-}
-
 
 struct Grid *expand(struct Grid *in) {
   struct Grid *out = grid_new(in->w*2, in->h);
@@ -217,12 +159,24 @@ struct Grid *expand(struct Grid *in) {
 
 void start_pos(struct Grid *g, int *x, int *y) { grid_find(g, '@', *x, *y); }
 
+void play(struct Grid *g, int x, int y) {
+  int last_dir=0;
+  while(!WindowShouldClose()) {
+    if(IsKeyPressed(KEY_UP)) { instruction(g, x, y, '^', &x, &y); last_dir = 0; }
+    if(IsKeyPressed(KEY_RIGHT)) { instruction(g, x, y, '>', &x, &y); last_dir = 1; }
+    if(IsKeyPressed(KEY_DOWN)) { instruction(g, x, y, 'v', &x, &y); last_dir = 2; }
+    if(IsKeyPressed(KEY_LEFT)) { instruction(g, x, y, '<', &x, &y); last_dir = 3; }
+    draw(g, last_dir, x ,y);
+  }
+}
+
 aoc_main({
     size_t sz;
     char *in = input("day15.txt", &sz);
 
-    InitWindow(1200, 900, "Warehouse mayhem");
-    SetTargetFPS(240);
+    InitWindow(1200, 900, "Varastomähinä!");
+    SetTargetFPS(60);
+    tileset = LoadTexture("tileset.png");
 
     // input changes from frid to moves when first double newline is encountered
     char *split = strstr(in, "\n\n");
@@ -233,9 +187,11 @@ aoc_main({
     struct Grid *g2 = expand(g);
     int x;
     int y;
+    bool draw_on = false;
     start_pos(g, &x, &y);
-
+    //play(g, x, y);
     while(*inst != 0) {
+      //if(*inst != '\n' && draw_on) draw(g, ch_to_dir(*inst), x, y);
       instruction(g, x, y, *inst, &x, &y);
       inst++;
     }
@@ -252,25 +208,10 @@ aoc_main({
     inst = split + 2;
     start_pos(g2, &x, &y);
     int last_dir = 0;
-    bool game = false;
-    bool draw_on = false;
-    while(!WindowShouldClose() && *inst != 0) {
-      if(game) {
-        if(IsKeyPressed(KEY_UP)) { instruction2(g2, x, y, '^', &x, &y); last_dir = 0; }
-        if(IsKeyPressed(KEY_RIGHT)) { instruction2(g2, x, y, '>', &x, &y); last_dir = 1; }
-        if(IsKeyPressed(KEY_DOWN)) { instruction2(g2, x, y, 'v', &x, &y); last_dir = 2; }
-        if(IsKeyPressed(KEY_LEFT)) { instruction2(g2, x, y, '<', &x, &y); last_dir = 3; }
-        draw(g2, last_dir);
-      } else {
-        if(*inst == '\n') { inst++; continue; }
-         if(*inst == 0)
-           draw(g2, 0);
-         else {
-           if(draw_on) draw(g2, ch_to_dir(*inst));
-           instruction2(g2, x, y, *inst, &x, &y);
-           inst++;
-         }
-      }
+    while(*inst != 0) {
+      if(*inst != '\n' && draw_on) draw(g2, ch_to_dir(*inst), x, y);
+      instruction(g2, x, y, *inst, &x, &y);
+      inst++;
     }
     gps = 0;
     grid_each(g2,x,y,val, {
