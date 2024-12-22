@@ -1,0 +1,22 @@
+#!/usr/bin/env elf
+w: 101, h: 103,
+parse: {["p=", &read,",",&read," v=",&read,",",&read] match($)},
+robots: "day14.txt" lines map(parse),
+move: {x: $ _0, y: $ _1, vx: $ _2, vy: $ _3,
+  nx: x + vx, ny: y + vy,
+  [(nx < 0) if(w + nx, nx % w),
+   (ny < 0) if(h + ny, ny % h),
+   vx, vy]},
+quadrant: {x: $ _0, y: $ _1,
+  [((x < 50) and (y < 51)), # top left
+   ((x > 50) and (y < 51)), # top right
+   ((x < 50) and (y > 51)), # bottom left
+   ((x > 50) and (y > 51))] # bottom right
+   cond(1,2,3,4,nil)
+},
+safety: {qs: $ keep(quadrant) group({$}) map(&len),
+  qs at(1,0) * qs at(2,0) * qs at(3,0) * qs at(4,0)},
+
+r: robots ref,
+1 to(100) do({ "move %d" fmt($) print, r swap({$ map(move)}) }),
+safety call(r val) pr

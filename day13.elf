@@ -1,0 +1,27 @@
+#!/usr/bin/env elf
+button: {line,b| ["Button ", b, ": X+", &read, ", Y+", &read] match(line) },
+parse: {[ button call($ _0,"A"), button call($ _1,"B"), ["Prize: X=", &read, ", Y=", &read] match($ _2) ]},
+configs: "day13.txt" lines split([""]) map(parse),
+
+win: {moves, a, b, p |
+  # Cramer's rule
+  # Button A: X+94, Y+34
+  # Button B: X+22, Y+67
+  # Prize: X=8400, Y=5400
+  #
+  # 94A + 22B = 8400
+  # 34A + 67B = 5400
+  det: (a _0 * b _1) - (a _1 * b _0),
+  am: (((p _0 * b _1) - (p _1 * b _0)) ) / det,
+  bm: (((a _0 * p _1) - (a _1 * p _0))) / det,
+  x: (a _0 * am) + (b _0 * bm),
+  y: (a _1 * am) + (b _1 * bm),
+  ((am <= moves) and (bm <= moves) and (p = [x,y])) if({ (3 * am) + bm })
+},
+
+# Part1
+configs keep({ win call(100, $ _0, $ _1, $ _2) }) sum pr,
+
+# Part2
+fix: {p: $ _2, [$ _0, $ _1, [p _0 + 10000000000000, p _1 + 10000000000000]]},
+configs map(fix) keep({ win call(999999999999, $ _0, $ _1, $ _2) }) sum pr

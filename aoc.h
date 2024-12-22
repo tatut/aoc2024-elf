@@ -4,10 +4,11 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <time.h>
+#include <string.h>
 
-#define panic(X)                                                               \
+#define panic(args...)                                                         \
   {                                                                            \
-    printf(X);                                                                 \
+    printf(args);                                                              \
     printf("\n");                                                              \
     exit(1);                                                                   \
   }
@@ -61,6 +62,35 @@ struct Grid *grid(const char *file) {
   return out;
 }
 
+struct Grid *grid_from_string(char *data) {
+  size_t len = strlen(data);
+  size_t w = find(data,'\n') - data;
+  size_t h = len / (w+1);
+  struct Grid* out = (struct Grid*) malloc(sizeof(struct Grid));
+  out->w = w;
+  out->h = h;
+  out->data = data;
+  return out;
+};
+
+struct Grid *grid_new(size_t w, size_t h) {
+  char *data = (char *) calloc(((w+1)*h), sizeof(char));
+  struct Grid *g = (struct Grid*) malloc(sizeof(struct Grid));
+  g->w = w;
+  g->h = h;
+  g->data = data;
+  return g;
+}
+
+struct Grid *grid_copy(struct Grid *in) {
+  struct Grid *out = (struct Grid *)malloc(sizeof(struct Grid));
+  out->w = in->w;
+  out->h = in->h;
+  out->data = (char*)malloc(sizeof(char)*(in->w+1)*in->h);
+  memcpy(out->data, in->data, sizeof(char)*(in->w+1)*in->h);
+  return out;
+}
+
 void grid_free(struct Grid* g) {
   free(g->data);
   free(g);
@@ -103,6 +133,29 @@ void grid_free(struct Grid* g) {
   val = grid_at(g, nx, ny);                                                    \
   if (val != 0)                                                                \
     body;
+
+// All neighbors 4, even outside bounds (val==0 then)
+#define grid_neighbors_all(g, x, y, nx, ny, val, body)                         \
+  size_t nx;                                                                   \
+  size_t ny;                                                                   \
+  char val;                                                                    \
+  nx = x - 1;                                                                  \
+  ny = y;                                                                      \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  nx = x + 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  nx = x;                                                                      \
+  ny = y - 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;                                                                        \
+  ny = y + 1;                                                                  \
+  val = grid_at(g, nx, ny);                                                    \
+  body;
+
+
+
 
 #define grid_find(g, val, x, y)                                                \
   for (size_t gfx = 0; gfx < g->w; gfx++) {                                    \
@@ -150,6 +203,19 @@ long number(char* ptr, char** after) {
   return res;
 }
 
+// Read a number at position (which must be found here)
+// if first char is '-' then number is negative
+long number_neg(char *ptr, char **after) {
+  if(*ptr != '-' && !is_digit(*ptr)) panic("Expected - or a digit when parsing number");
+  char *end = ptr+1;
+  while(is_digit(*end)) end++;
+  char old_end = *end;
+  *end = 0;
+  long res = atol(ptr);
+  *end = old_end;
+  *after = end;
+  return res;
+}
 
 size_t lines_count(char* input) {
   int c=0;
@@ -161,9 +227,10 @@ size_t lines_count(char* input) {
 }
 
 
-#define lines_each(input, line, body)                                          \
+#define lines_each(input, line_idx, line, body)                          \
   char *line = input;                                                          \
   bool _line_done = false;                                                     \
+  size_t line_idx = 0; \
   while (*line != 0 && _line_done == false) {                                  \
     char *_line_end = find(line, '\n');                                        \
     char _old_line_end = *_line_end;                                           \
@@ -173,6 +240,7 @@ size_t lines_count(char* input) {
       *_line_end = 0;                                                          \
     body *_line_end = _old_line_end;                                           \
     line = _line_end + 1;                                                      \
+    line_idx++; \
   }
 
 
