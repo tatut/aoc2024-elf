@@ -41,3 +41,17 @@
 (defn outside? [{:keys [max-x max-y]} [x y]]
   (or (not (<= 0 x max-x))
       (not (<= 0 y max-y))))
+
+(defn inside? [grid pos]
+  (not (outside? grid pos)))
+
+(defn neighbors [g [x y]]
+  (keep #(when (inside? g %) %)
+        [[x (dec y)]
+         [(inc x) y]
+         [x (inc y)]
+         [(dec x) y]]))
+
+(defn distance [[x1 y1] [x2 y2]]
+  (+ (abs (- x1 x2))
+     (abs (- y1 y2))))
